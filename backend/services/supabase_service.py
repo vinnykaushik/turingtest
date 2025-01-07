@@ -15,7 +15,7 @@ class SupabaseService:
 
     def fetch_questions(self, limit: int):
         """
-        Fetches the specified number of questions from the db.
+        Fetches the specified number of questions in a random order from the db.
 
         Args:
             limit (int): The number of questions to fetch.
@@ -25,9 +25,8 @@ class SupabaseService:
         """
         try:
             response = (
-                self.client.table("Questions")
-                .select("id,char_limit,question_content")
-                
+                self.client
+                .rpc("get_random_questions")
                 .limit(limit)
                 .execute()
             )
