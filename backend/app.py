@@ -1,77 +1,81 @@
-from flask import Flask, request, jsonify
-import requests
+from flask import Flask, jsonify
 import os
-import random
 from dotenv import load_dotenv
-from supabase import create_client, Client
-import google.generativeai as genai
+from services.supabase_service import SupabaseService
+from services.gemini_service import GeminiService
 
 load_dotenv()
 
-url: str = os.getenv("SUPABASE_URL")
-key: str = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+def create_app():
+    app = Flask(__name__)
 
-gemini_key = os.getenv("GEMINI_API_KEY")
+    # Initialize Supabase and AI services
+    supabase_service = SupabaseService(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+    ai_service = GeminiService(os.getenv("GEMINI_API_KEY"))
+
+    @app.route('/questions', methods=['GET'])
+    def get_questions():
+        """
+        Endpoint to fetch 10 random questions, split in half and grouped into vote and answer.
+        Vote: Questions for the end user to vote on.
+        Answer: questions for the end user to answer.
+        
+        
+        """
+        try:
+            # Fetch 10 questions from Supabase
+            questions = supabase_service.fetch_questions(limit=10)
+            if not questions:
+                return jsonify({"error": "No questions found"}), 404
+
+            group_1 = questions[:5]
+            group_2 = questions[5:]
+            
+            vote = []
+            for question in group_1:
+                question_id = question["id"]
+                char_limit = question["char_limit"]
+                question_content = question["question_content"]
+
+                human_response = supabase_service.fetch_human_response(question_id)
+
+                ai_response = ai_service.fetch_ai_response(
+                    char_limit,
+                    question_content,
+                )
+
+                vote.append({
+                    "question_id": question_id,
+                    "question_content": question_content,
+                    "char_limit": char_limit,
+                    "human_response": human_response,
+                    "ai_response": ai_response,
+                })
+                
+            answer = []
+            for question in group_2:
+                question_id = question["id"]
+                char_limit = question["char_limit"]
+                question_content = question["question_content"]
+                
+                answer.append({
+                    "question_id": question_id,
+                    "question_content": question_content,
+                    "char_limit": char_limit
+                })
+                
+
+            return jsonify({
+                "vote": vote,
+                "answer": answer,
+            })
+        except Exception as e:
+            print(f"Error fetching questions: {e}")
+            return jsonify({"error": "An error occurred while fetching questions"}), 500
+
+    return app
 
 
-app = Flask("Turing")  # figure out if this is right
-
-
-def fetch_question_content(question_id):
-    """function
-
-    Args:
-        question_id (int): the id of the question to fetch
-
-    Returns:
-        json: a json of the character limit for a response and the question content
-    """
-    
-    response = (
-        supabase.table("Questions")
-        .select("char_limit,question_content")
-        .eq("id", question_id)
-        .execute()
-    )
-    return response.data[0]
-
-
-def fetch_human_response(question_id):
-    """function
-
-    Args:
-        question_id (int): the id of the question to fetch
-
-    Returns:
-        String: a human response to the given question, selected randomly from the database
-    """
-    
-    responses = (
-        supabase.table("UserResponse")
-        .select("response_content")
-        .eq("question_id", question_id)
-        .execute()
-    )
-    data = responses.data
-    return random.choice(data)['response_content']
-
-def fetch_ai_response(question_id):
-    """function
-
-    Args:
-        question_id (int): the id of the question to fetch
-
-    Returns:
-        String: the AI response to the question, within a certain character count. uses the Gemini API
-    """
-    starting_prompt = "Answer the following question in a manner as humanlike as possible. Don't be afraid to avoid proper grammar or capitalization. Answer in the folliowing amount of characters: "
-
-    genai.configure(api_key=gemini_key)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    question = fetch_question_content(question_id)
-    
-    response = model.generate_content(
-        starting_prompt + str(question["char_limit"]) + question["question_content"] 
-    )
-    return response.text
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True)
