@@ -11,7 +11,7 @@ export default function Navbar() {
         <a href="#how-to" className="text-foreground hover:underline">
           how to
         </a>
-        <a href="#github" className="text-foreground hover:underline">
+        <a href="https://github.com/vinnykaushik/turingtest" className="text-foreground hover:underline">
           github
         </a>
       </div>
