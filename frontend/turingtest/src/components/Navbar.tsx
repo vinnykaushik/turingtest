@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Navbar() {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-background font-mono">
-      <div className="text-accent text-2xl w-fit h-fit p-1 rounded-lg bg-background hover:brightness-90 hover:transition-all ">
+    <nav className="flex items-center justify-between px-6 py-4 bg-background">
+      <div className="text-accent text-2xl w-fit h-1rem p-1 rounded-lg bg-background hover:brightness-90 hover:transition-all ">
         <Link href={"/"}>
           turing test
         </Link>
