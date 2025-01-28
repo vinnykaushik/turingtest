@@ -1,10 +1,12 @@
 "use client";
 
 import { Metadata } from "next"
+import { useContext } from 'react'
 import { useParams } from "next/navigation"
+import { QuestionsContext } from '@/context/QuestionContext'
 import AnswerCard from "@/components/AnswerCard"
-import numberToWords from "number-to-words";
-import QuestionFooter from "@/components/QuestionFooter";
+import numberToWords from "number-to-words"
+import QuestionFooter from "@/components/QuestionFooter"
 
 /* export const metadata: Metadata = {
   title: 'turing test | question ' + { id },
@@ -12,8 +14,14 @@ import QuestionFooter from "@/components/QuestionFooter";
 } */
 
 export default function Question() {
+  const context = useContext(QuestionsContext);
+  if (!context) {
+    return <div>Error: Questions context is not available.</div>;
+  }
+  const { questions } = context;
   const params = useParams();
   const id = params.id;
+  const question = questions.find(q => q.id === id);
   const idWord = numberToWords.toWords(Number(id)).trim();
   let introDialogue = "She’s a replicant, isn’t she?"
   let dialogue = "I’m impressed. How many questions does it usually take to spot them?"
