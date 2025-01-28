@@ -8,7 +8,8 @@ export default {
   ],
   theme: {
     fontFamily: {
-      'mono': ['ui-monospace', 'Courier Prime']
+      'mono': ['ui-monospace', 'Courier Prime'],
+      'serif': ['ui-serif', 'Georgia'],
     },
     extend: {
       colors: {
