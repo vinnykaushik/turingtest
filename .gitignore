@@ -133,3 +133,5 @@ dist
 backend/.env
 backend/services/supabase_service.py
 backend/services/__pycache__/supabase_service.cpython-312.pyc
+
+.venv/
